@@ -16,10 +16,10 @@
 
 package com.example.inventory.ui.item
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.inventory.data.ItemsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +27,10 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 /**
  * ViewModel to retrieve, update and delete an item from the [ItemsRepository]'s data source.
@@ -35,7 +39,6 @@ class ItemDetailsViewModel(
     savedStateHandle: SavedStateHandle,
     private val itemsRepository: ItemsRepository
 ) : ViewModel() {
-
     private val itemId: Int = checkNotNull(savedStateHandle[ItemDetailsDestination.itemIdArg])
 
     val uiState: StateFlow<ItemDetailsUiState> =
@@ -66,6 +69,20 @@ class ItemDetailsViewModel(
 
     suspend fun deleteItem() {
         itemsRepository.deleteItem(uiState.value.itemDetails.toItem())
+    }
+
+    /**
+     * Update stock quantity, also update soldQuantity for Summary page
+     */
+    fun reduceQuantityInStockByOrderedQuantity(quantityToOrder: Int) {
+        viewModelScope.launch{
+            val currentItem = uiState.value.itemDetails.toItem()
+            if (currentItem.quantity > 0 && quantityToOrder >= quantityToOrder) {
+                itemsRepository.updateItem(currentItem.copy(
+                    quantity = currentItem.quantity - quantityToOrder,
+                    soldQuantity = quantityToOrder))
+            }
+        }
     }
 }
 

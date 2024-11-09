@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel to retrieve all items in the Room database.
@@ -39,6 +40,17 @@ class HomeViewModel(itemsRepository : ItemsRepository) : ViewModel() {
 
     companion object {
         private const val TIMEOUT_MILLIS = 5_000L
+    }
+
+    /**
+     * Search for itemId in the database
+     */
+    fun getItemIdByName(name: String): Int? {
+        val itemId = homeUiState.value.itemList.find {
+            it.name.equals(name, ignoreCase = true)
+        }?.id
+
+        return itemId
     }
 }
 

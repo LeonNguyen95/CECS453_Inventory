@@ -37,4 +37,14 @@
     <string name="required_fields">*required fields</string>
     <string name="search_inventory">Search Inventory</string>
     <string name="search">Search</string>
+    <string name="item_order_title">Item Order</string>
+    <string name="quantity_ordered">Quantity Ordered</string>
+    <string name="quantity_to_order">Quantity to order</string>
+    <string name="place_order">Place Order</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="item_not_found">Item Not Found!</string>
+    <string name="order_summary">Order Summary</string>
+    <string name="total_price">Total Price</string>
+    <string name="home">Home</string>
 </resources>

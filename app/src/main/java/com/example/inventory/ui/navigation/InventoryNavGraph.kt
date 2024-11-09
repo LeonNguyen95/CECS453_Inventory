@@ -31,6 +31,10 @@ import com.example.inventory.ui.item.ItemEditDestination
 import com.example.inventory.ui.item.ItemEditScreen
 import com.example.inventory.ui.item.ItemEntryDestination
 import com.example.inventory.ui.item.ItemEntryScreen
+import com.example.inventory.ui.item.ItemOrderDestination
+import com.example.inventory.ui.item.ItemOrderScreen
+import com.example.inventory.ui.item.ItemOrderSummaryDestination
+import com.example.inventory.ui.item.ItemOrderSummaryScreen
 
 /**
  * Provides Navigation graph for the application.
@@ -51,7 +55,9 @@ fun InventoryNavHost(
                 navigateToItemUpdate = {
                     navController.navigate("${ItemDetailsDestination.route}/${it}")
                 },
-                navigateToItemSearched = { /*TODO*/ }
+                navigateToItemOrder = {
+                    navController.navigate("${ItemOrderDestination.route}/${it}")
+                }
             )
         }
         composable(route = ItemEntryDestination.route) {
@@ -80,6 +86,29 @@ fun InventoryNavHost(
             ItemEditScreen(
                 navigateBack = { navController.popBackStack() },
                 onNavigateUp = { navController.navigateUp() }
+            )
+        }
+        composable(
+            route = ItemOrderDestination.routeWithArgs,
+            arguments = listOf(
+                navArgument(ItemOrderDestination.itemIdArg) { type = NavType.IntType }
+            )
+        ) {
+            ItemOrderScreen(
+                navigateToItemOrderSummary = {
+                    navController.navigate("${ItemOrderSummaryDestination.route}/${it}")
+                },
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = ItemOrderSummaryDestination.routeWithArgs,
+            arguments = listOf(
+                navArgument(ItemOrderSummaryDestination.itemIdArg) { type = NavType.IntType }
+            )
+        ) {
+            ItemOrderSummaryScreen(
+                navigateToHome = { navController.navigate(route = HomeDestination.route) }
             )
         }
     }

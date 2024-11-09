@@ -28,5 +28,6 @@ data class Item(
     val id: Int = 0,
     val name: String,
     val price: Double,
-    val quantity: Int
+    val quantity: Int,
+    val soldQuantity: Int = 0 // this variable will be reset to 0 after each transaction
 )

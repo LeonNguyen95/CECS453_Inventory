@@ -27,9 +27,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,19 +41,20 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -79,13 +80,15 @@ object HomeDestination : NavigationDestination {
 fun HomeScreen(
     navigateToItemEntry: () -> Unit,
     navigateToItemUpdate: (Int) -> Unit,
-    navigateToItemSearched: (Int) -> Unit,
+    navigateToItemOrder: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val homeUiState by viewModel.homeUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var searchQuery by remember{ mutableStateOf("") }
+    var itemId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var itemNotFound by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -114,12 +117,26 @@ fun HomeScreen(
             onItemClick = navigateToItemUpdate,
             searchQuery = searchQuery,
             onSearchQueryChange = { newQuery ->
-                searchQuery = newQuery.lowercase()
+                searchQuery = newQuery
+                itemId = viewModel.getItemIdByName(searchQuery)
             },
-            onSearchClick = { /*TODO*/ },
+            onSearchClick = {
+                if (itemId == null) {
+                    itemNotFound = true
+                } else {
+                    navigateToItemOrder(itemId!!)
+                }
+
+            },
             modifier = modifier.fillMaxSize(),
             contentPadding = innerPadding,
         )
+        if (itemNotFound) {
+            ErrorMessage(
+                message = stringResource(R.string.item_not_found),
+                onDismissRequest = { itemNotFound = false }
+            )
+        }
     }
 }
 
@@ -135,8 +152,16 @@ private fun HomeBody(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier,
+        modifier = modifier
+            .padding(contentPadding)
     ) {
+        // Search Bar
+        ItemSearchBar(
+            searchQuery = searchQuery,
+            onSearchQueryChange = onSearchQueryChange,
+            onSearchClick = onSearchClick,
+            modifier = Modifier.padding(10.dp)
+        )
         if (itemList.isEmpty()) {
             Text(
                 text = stringResource(R.string.no_item_description),
@@ -145,13 +170,6 @@ private fun HomeBody(
                 modifier = Modifier.padding(contentPadding),
             )
         } else {
-            // Search Bar
-            SearchBar(
-                searchQuery = searchQuery,
-                onSearchQueryChange = onSearchQueryChange,
-                onSearchClick = onSearchClick
-            )
-
             InventoryList(
                 itemList = itemList,
                 onItemClick = { onItemClick(it.id) },
@@ -183,14 +201,16 @@ private fun InventoryList(
 }
 
 @Composable
-private fun SearchBar(
+private fun ItemSearchBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onSearchClick: () -> Unit
+    onSearchClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        horizontalArrangement = Arrangement.Center
     ) {
         OutlinedTextField(
             value = searchQuery,
@@ -205,7 +225,8 @@ private fun SearchBar(
         )
         Button(
             onClick = onSearchClick,
-            modifier = Modifier.padding(start = dimensionResource(id = R.dimen.padding_medium))
+            enabled = searchQuery.isNotEmpty(),
+            modifier = Modifier.padding(start = dimensionResource(id = R.dimen.padding_small))
         ) {
             Text(stringResource(R.string.search))
         }
@@ -243,6 +264,25 @@ private fun InventoryItem(
             )
         }
     }
+}
+
+@Composable
+fun ErrorMessage(
+    message: String,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(stringResource(R.string.attention)) },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        modifier = modifier,
+    )
 }
 
 @Preview(showBackground = true)
